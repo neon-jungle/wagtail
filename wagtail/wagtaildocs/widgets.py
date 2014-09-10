@@ -1,14 +1,14 @@
 from __future__ import absolute_import, unicode_literals
 
-import json
-
-from django.forms import widgets
-
-from wagtail.utils.widgets import WidgetWithScript
+from wagtail.wagtailadmin.widgets import BaseAdminChooser
+from .models import Document
 
 
-class AdminDocumentChooser(WidgetWithScript, widgets.Input):
-    input_type = 'hidden'
+class AdminDocumentChooser(BaseAdminChooser):
+    template = 'wagtaildocs/widgets/document_chooser.html'
 
-    def render_js_init(self, id_, name, value):
-        return "createDocumentChooser({0});".format(json.dumps(id_))
+    def render(self, name, value, attrs=None, extra_context={}):
+        document = Document.objects.get(pk=value) if value else None
+        context = {'document': document}
+        context.update(extra_context)
+        return super(AdminDocumentChooser, self).render(name, value, attrs, context)

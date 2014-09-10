@@ -1,4 +1,3 @@
-{% extends "wagtailadmin/shared/field.html" %}
 {% load i18n %}
 {% comment %}
     Either the chosen or unchosen div will be shown, depending on the presence
@@ -10,7 +9,7 @@
 
 {% block form_field %}
 
-    <div id="{{ field.id_for_label }}-chooser" class="chooser {% block chooser_class %}page-chooser{% endblock %} {% if not is_chosen %}blank{% endif %}">
+    <div id="{{ id }}-chooser" class="chooser {% block chooser_class %}page-chooser{% endblock %} {% if not is_chosen %}blank{% endif %}">
 
         <div class="chosen">
             {% block chosen_state_view %}{% endblock %}
@@ -29,6 +28,8 @@
 
     </div>
 
-    {{ field }}
+    {{ widget }}
+
+    {% block js %}{% endblock %}
 
 {% endblock %}

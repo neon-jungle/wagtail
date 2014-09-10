@@ -1,14 +1,14 @@
 from __future__ import absolute_import, unicode_literals
 
-import json
-
-from django.forms import widgets
-
-from wagtail.utils.widgets import WidgetWithScript
+from wagtail.wagtailadmin.widgets import BaseAdminChooser
+from .models import Image
 
 
-class AdminImageChooser(WidgetWithScript, widgets.Input):
-    input_type = 'hidden'
+class AdminImageChooser(BaseAdminChooser):
+    template = 'wagtailimages/widgets/image_chooser.html'
 
-    def render_js_init(self, id_, name, value):
-        return "createImageChooser({0});".format(json.dumps(id_))
+    def render(self, name, value, attrs=None, extra_context={}):
+        image = Image.objects.get(pk=value) if value else None
+        context = {'image': image}
+        context.update(extra_context)
+        return super(AdminImageChooser, self).render(name, value, attrs, context)

@@ -4,8 +4,10 @@ import json
 
 from django.core.urlresolvers import reverse
 from django.forms import widgets
+from django.utils.safestring import mark_safe
+from django.template.loader import render_to_string
 
-from wagtail.utils.widgets import WidgetWithScript
+from wagtail.utils.widgets import WidgetWithScript, safe_json
 
 from taggit.forms import TagWidget
 
@@ -32,8 +34,25 @@ class AdminTagWidget(WidgetWithScript, TagWidget):
             json.dumps(reverse('wagtailadmin_tag_autocomplete')))
 
 
-class AdminPageChooser(WidgetWithScript, widgets.Input):
+class BaseAdminChooser(widgets.Input):
     input_type = 'hidden'
+    template = 'wagtailadmin/widgets/chooser.html'
+
+    def render(self, name, value, attrs=None, extra_context={}):
+        widget = super(BaseAdminChooser, self).render(name, value, attrs)
+        attrs = self.build_attrs(attrs)
+        context = {
+            'id': attrs.get('id', None),
+            'id_js': safe_json(attrs.get('id', None)),
+            'widget': widget,
+            'is_chosen': value is not None,
+        }
+        context.update(extra_context)
+        return mark_safe(render_to_string(self.template, context))
+
+
+class AdminPageChooser(BaseAdminChooser):
+    template = 'wagtailadmin/widgets/page_chooser.html'
     target_content_type = None
 
     def __init__(self, content_type=None, **kwargs):
@@ -42,14 +61,21 @@ class AdminPageChooser(WidgetWithScript, widgets.Input):
         if content_type is not None:
             self.target_content_type = content_type
 
-    def render_js_init(self, id_, name, value):
-        page = value
-        parent = page.get_parent() if page else None
+    def render(self, name, value, attrs=None, extra_context={}):
         content_type = self.target_content_type
+        Model = content_type.model_class()
 
-        return "createPageChooser({id}, {content_type}, {parent});".format(
-            id=json.dumps(id_),
-            content_type=json.dumps('{app}.{model}'.format(
-                app=content_type.app_label,
-                model=content_type.model)),
-            parent=json.dumps(parent.id if parent else None))
+        if value:
+            page = Model.objects.get(pk=value)
+            parent = page.get_parent()
+        else:
+            page, parent = None, None
+
+        context = {
+            'page': page,
+            'content_type': safe_json('{0}.{1}'.format(
+                Model._meta.app_label, Model._meta.model_name)),
+            'parent': safe_json(parent.id if parent else None),
+        }
+        context.update(extra_context)
+        return super(AdminPageChooser, self).render(name, value, attrs, context)

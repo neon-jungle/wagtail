@@ -1,3 +1,5 @@
+import json
+
 from django.forms.widgets import Widget
 from django.utils.safestring import mark_safe
 
@@ -17,3 +19,7 @@ class WidgetWithScript(Widget):
 
     def render_js_init(self, id_, name, value):
         return ''
+
+
+def safe_json(data):
+    return mark_safe(json.dumps(data))

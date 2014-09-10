@@ -433,20 +433,8 @@ class BaseChooserPanel(BaseFieldPanel):
             # like every other unpopulated field type. Yay consistency!
             return None
 
-    def render_as_field(self, show_help_text=True):
-        instance_obj = self.get_chosen_item()
-        return mark_safe(render_to_string(self.field_template, {
-            'field': self.bound_field,
-            self.object_type_name: instance_obj,
-            'is_chosen': bool(instance_obj),
-            'show_help_text': show_help_text,
-        }))
-
 
 class BasePageChooserPanel(BaseChooserPanel):
-    field_template = "wagtailadmin/edit_handlers/page_chooser_panel.html"
-    object_type_name = "page"
-
     _target_content_type = None
 
     @classmethod
