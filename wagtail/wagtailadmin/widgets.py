@@ -56,7 +56,6 @@ class AdminPageChooser(BaseAdminChooser):
     target_content_type = None
 
     def __init__(self, content_type=None, **kwargs):
-        print 'Created admin page chooser for content type', content_type.model_class()
         super(AdminPageChooser, self).__init__(**kwargs)
         if content_type is not None:
             self.target_content_type = content_type
