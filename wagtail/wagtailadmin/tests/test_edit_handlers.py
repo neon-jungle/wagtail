@@ -2,6 +2,7 @@ from mock import MagicMock
 
 from django.test import TestCase
 from django.core.exceptions import ImproperlyConfigured
+from django.forms.models import ModelChoiceField
 from django.forms.widgets import HiddenInput
 
 from wagtail.wagtailadmin.edit_handlers import (
@@ -19,6 +20,7 @@ from wagtail.wagtailadmin.edit_handlers import (
     PageChooserPanel,
     InlinePanel
 )
+from wagtail.wagtailadmin.widgets import AdminPageChooser
 from wagtail.wagtailcore.models import Page, Site
 
 
@@ -196,6 +198,10 @@ class TestPageChooserPanel(TestCase):
         errors = ['errors']
         id_for_label = 'id for label'
 
+        @property
+        def field(self):
+            return self
+
     class FakeInstance(object):
         class FakePage(object):
             class FakeParent(object):
@@ -211,16 +217,18 @@ class TestPageChooserPanel(TestCase):
             self.barbecue = fake_page
 
     def setUp(self):
-        fake_field = self.FakeField()
+        field = ModelChoiceField(Page, widget=AdminPageChooser())
+        fake_form = {}
+        fake_field = BoundField(form, field, 'barbecue')
+        fake_form['barbecue'] = fake_field
         fake_instance = self.FakeInstance()
         self.page_chooser_panel = PageChooserPanel('barbecue')(
-            instance=fake_instance,
-            form={'barbecue': fake_field})
+            instance=fake_instance, form=fake_form)
 
     def test_render_js_init(self):
-        result = self.page_chooser_panel.render_js_init()
-        self.assertEqual(result,
-                         "createPageChooser('id for label', 'wagtailcore.page', 1);")
+        result = self.page_chooser_panel.render_as_field()
+        self.assertIn(result,
+                      "createPageChooser('id for label', 'wagtailcore.page', 1);")
 
     def test_get_chosen_item(self):
         result = self.page_chooser_panel.get_chosen_item()
@@ -371,4 +379,4 @@ class TestInlinePanel(TestCase):
             instance=self.fake_instance,
             form=self.fake_field)
         self.assertIn('var panel = InlinePanel({',
-                      inline_panel.render_js_init())
+                      inline_panel.render())
