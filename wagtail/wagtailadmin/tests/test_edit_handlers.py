@@ -2,6 +2,7 @@ from mock import MagicMock
 
 from django.test import TestCase
 from django.core.exceptions import ImproperlyConfigured
+from django.forms.models import ModelChoiceField
 from django.forms.widgets import HiddenInput
 
 from wagtail.wagtailadmin.edit_handlers import (
@@ -19,6 +20,7 @@ from wagtail.wagtailadmin.edit_handlers import (
     PageChooserPanel,
     InlinePanel
 )
+from wagtail.wagtailadmin.widgets import AdminPageChooser
 from wagtail.wagtailcore.models import Page, Site
 
 
@@ -63,9 +65,6 @@ class TestExtractPanelDefinitionsFromModelClass(TestCase):
 class TestTabbedInterface(TestCase):
     class FakeChild(object):
         class FakeGrandchild(object):
-            def render_js(self):
-                return "rendered js"
-
             def rendered_fields(self):
                 return ["rendered fields"]
 
@@ -100,10 +99,6 @@ class TestTabbedInterface(TestCase):
     def test_render(self):
         result = self.tabbed_interface.render()
         self.assertIn('<div class="tab-content">', result)
-
-    def test_render_js(self):
-        result = self.tabbed_interface.render_js()
-        self.assertEqual(result, 'rendered js')
 
     def test_rendered_fields(self):
         result = self.tabbed_interface.rendered_fields()
@@ -149,17 +144,6 @@ class TestFieldPanel(TestCase):
         self.assertIn('<p class="error-message">',
                       result)
 
-    def test_render_js_unknown_widget(self):
-        field = self.FakeField()
-        bound_field = self.FakeField()
-        widget = self.FakeField()
-        field.widget = widget
-        bound_field.field = field
-        self.field_panel.bound_field = bound_field
-        result = self.field_panel.render_js()
-        self.assertEqual(result,
-                         '')
-
     def test_render_as_field(self):
         field = self.FakeField()
         bound_field = self.FakeField()
@@ -194,10 +178,6 @@ class TestFieldPanel(TestCase):
         result = FieldPanel('barbecue', 'snowman').get_form_class(Page)
         self.assertTrue(issubclass(result, WagtailAdminModelForm))
 
-    def test_render_js(self):
-        result = self.field_panel.render_js()
-        self.assertEqual(result, "")
-
     def test_render_missing_fields(self):
         fake_form = self.FakeForm()
         fake_form["foo"] = "bar"
@@ -211,29 +191,16 @@ class TestFieldPanel(TestCase):
         self.assertIn("bar", self.field_panel.render_form_content())
 
 
-class TestRichTextFieldPanel(TestCase):
-    class FakeField(object):
-        label = 'label'
-        help_text = 'help text'
-        errors = ['errors']
-        id_for_label = 'id for label'
-
-    def test_render_js(self):
-        fake_field = self.FakeField()
-        rich_text_field_panel = RichTextFieldPanel('barbecue')(
-            instance=True,
-            form={'barbecue': fake_field})
-        result = rich_text_field_panel.render_js()
-        self.assertEqual(result,
-                         "makeRichTextEditable(fixPrefix('id for label'));")
-
-
 class TestPageChooserPanel(TestCase):
     class FakeField(object):
         label = 'label'
         help_text = 'help text'
         errors = ['errors']
         id_for_label = 'id for label'
+
+        @property
+        def field(self):
+            return self
 
     class FakeInstance(object):
         class FakePage(object):
@@ -250,16 +217,18 @@ class TestPageChooserPanel(TestCase):
             self.barbecue = fake_page
 
     def setUp(self):
-        fake_field = self.FakeField()
+        field = ModelChoiceField(Page, widget=AdminPageChooser())
+        fake_form = {}
+        fake_field = BoundField(form, field, 'barbecue')
+        fake_form['barbecue'] = fake_field
         fake_instance = self.FakeInstance()
         self.page_chooser_panel = PageChooserPanel('barbecue')(
-            instance=fake_instance,
-            form={'barbecue': fake_field})
+            instance=fake_instance, form=fake_form)
 
-    def test_render_js(self):
-        result = self.page_chooser_panel.render_js()
-        self.assertEqual(result,
-                         "createPageChooser(fixPrefix('id for label'), 'wagtailcore.page', 1);")
+    def test_render_js_init(self):
+        result = self.page_chooser_panel.render_as_field()
+        self.assertIn(result,
+                      "createPageChooser('id for label', 'wagtailcore.page', 1);")
 
     def test_get_chosen_item(self):
         result = self.page_chooser_panel.get_chosen_item()
@@ -347,9 +316,6 @@ class TestInlinePanel(TestCase):
         name = 'mock panel'
 
         class FakeChild(object):
-            def render_js(self):
-                return "rendered js"
-
             def rendered_fields(self):
                 return ["rendered fields"]
 
@@ -407,10 +373,10 @@ class TestInlinePanel(TestCase):
             form=self.fake_field)
         self.assertIn('Add foo', inline_panel.render())
 
-    def test_render_js(self):
+    def test_render_js_init(self):
         inline_panel = InlinePanel(self.mock_model,
                                    'formset')(
             instance=self.fake_instance,
             form=self.fake_field)
         self.assertIn('var panel = InlinePanel({',
-                      inline_panel.render_js())
+                      inline_panel.render())

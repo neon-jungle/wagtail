@@ -1,0 +1,13 @@
+{% extends "wagtailadmin/widgets/chooser.html" %}
+{% load i18n %}
+
+{% block chosen_state_view %}
+    <span class="title">{{ page.title }}</span>
+{% endblock %}
+
+{% block choose_another_button_label %}{% trans "Choose another page" %}{% endblock %}
+{% block choose_button_label %}{% trans "Choose a page" %}{% endblock %}
+
+{% block js %}
+    <script>createPageChooser({{ id_js }}, {{ content_type }}, {{ parent }});</script>
+{% endblock %}

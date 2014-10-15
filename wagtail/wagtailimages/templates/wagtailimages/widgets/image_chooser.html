@@ -1,4 +1,4 @@
-{% extends "wagtailadmin/edit_handlers/chooser_panel.html" %}
+{% extends "wagtailadmin/widgets/chooser.html" %}
 {% load wagtailimages_tags %}
 {% load i18n %}
 
@@ -17,3 +17,7 @@
 {% block clear_button_label %}{% trans "Clear image" %}{% endblock %}
 {% block choose_another_button_label %}{% trans "Choose another image" %}{% endblock %}
 {% block choose_button_label %}{% trans "Choose an image" %}{% endblock %}
+
+{% block js %}
+    <script>createImageChooser({{ id_js }})</script>
+{% endblock %}

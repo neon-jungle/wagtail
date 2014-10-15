@@ -173,8 +173,8 @@ class TestSnippetChooserPanel(TestCase):
         self.assertTrue('test_advert' in self.snippet_chooser_panel.render_as_field())
 
     def test_render_js(self):
-        self.assertTrue("createSnippetChooser(fixPrefix('id_text'), 'tests/advert');"
-                        in self.snippet_chooser_panel.render_js())
+        self.assertTrue("createSnippetChooser('id_text', 'tests/advert');"
+                        in self.snippet_chooser_panel.render())
 
 
 class TestSnippetRegistering(TestCase):
