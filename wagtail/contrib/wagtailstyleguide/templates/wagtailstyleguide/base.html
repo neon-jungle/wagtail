@@ -367,6 +367,15 @@
         </section>
 
         <section id="header">
+            {% header %}
+                {% block left %}
+                    Prefix
+                {% endblock %}
+                {% block right %}
+                    Suffix
+                {% endblock %}
+            {% endheader %}
+
             <h2>Header</h2>
 
             {% include "wagtailadmin/shared/header.html" with title=title_trans %}
