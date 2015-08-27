@@ -1,15 +1,14 @@
 from django.conf.urls import include, url
+from django.contrib.auth.models import Permission
+from django.contrib.staticfiles.templatetags.staticfiles import static
 from django.core import urlresolvers
 from django.utils.html import format_html, format_html_join
 from django.utils.translation import ugettext_lazy as _
-from django.contrib.auth.models import Permission
-from django.contrib.staticfiles.templatetags.staticfiles import static
 
-from wagtail.wagtailcore import hooks
 from wagtail.wagtailadmin.menu import MenuItem
-from wagtail.wagtailadmin.site_summary import SummaryItem
 from wagtail.wagtailadmin.search import SearchArea
-
+from wagtail.wagtailadmin.site_summary import SummaryItem
+from wagtail.wagtailcore import hooks
 from wagtail.wagtaildocs import admin_urls
 from wagtail.wagtaildocs.models import get_document_model
 from wagtail.wagtaildocs.permissions import permission_policy
@@ -68,9 +67,9 @@ def register_permissions():
                                      codename__in=['add_document', 'change_document'])
 
 
-@hooks.register('register_rich_text_link_handler')
-def register_document_link_handler():
-    return ('document', DocumentLinkHandler)
+@hooks.register('register_rich_text_link_chooser')
+def register_document_link_chooser():
+    return DocumentLinkHandler
 
 
 class DocumentsSummaryItem(SummaryItem):

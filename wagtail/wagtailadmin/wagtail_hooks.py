@@ -1,11 +1,14 @@
-from django.core import urlresolvers
 from django.contrib.auth.models import Permission
+from django.core import urlresolvers
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.staticfiles.templatetags.staticfiles import static
 
-from wagtail.wagtailcore import hooks
 from wagtail.wagtailadmin.menu import MenuItem, SubmenuMenuItem, settings_menu
 from wagtail.wagtailadmin.search import SearchArea
+from wagtail.wagtailcore import hooks
+
+from .link_choosers import (
+    EmailLinkChooser, ExternalLinkChooser, InternalLinkChooser)
 
 
 class ExplorerMenuItem(MenuItem):
@@ -41,3 +44,18 @@ def register_pages_search_area():
         name='pages',
         classnames='icon icon-folder-open-inverse',
         order=100)
+
+
+@hooks.register('register_rich_text_link_chooser')
+def register_internal_link_chooser():
+    return InternalLinkChooser
+
+
+@hooks.register('register_rich_text_link_chooser')
+def register_external_link_chooser():
+    return ExternalLinkChooser
+
+
+@hooks.register('register_rich_text_link_chooser')
+def register_email_link_chooser():
+    return EmailLinkChooser

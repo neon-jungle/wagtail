@@ -14,6 +14,7 @@ from wagtail.wagtailadmin.menu import admin_menu
 from wagtail.wagtailadmin.search import admin_search_areas
 
 from wagtail.utils.pagination import DEFAULT_PAGE_KEY
+from wagtail.wagtailadmin.link_choosers import registry
 
 
 register = template.Library()
@@ -280,4 +281,15 @@ def paginate(context, page, base_url='', page_key=DEFAULT_PAGE_KEY,
         'page': page,
         'page_key': page_key,
         'paginator': page.paginator,
+    }
+
+
+@register.inclusion_tag('wagtailadmin/chooser/_link_types.html',
+                        takes_context=True)
+def chooser_link_types(context, current):
+    return {
+        'request': context['request'],
+        'querystring': context.get('querystring', ''),
+        'current': current,
+        'link_types': registry,
     }

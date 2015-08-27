@@ -1,9 +1,18 @@
 from django.utils.html import escape
 
 from wagtail.wagtaildocs.models import get_document_model
+from wagtail.wagtailadmin.link_choosers import LinkChooser
+
+from django.utils.translation import ugettext_lazy as _
 
 
-class DocumentLinkHandler(object):
+class DocumentLinkHandler(LinkChooser):
+
+    id = 'document'
+    title = _('Document')
+    url_name = 'wagtaildocs:chooser'
+    priority = 400
+
     @staticmethod
     def get_db_attributes(tag):
         return {'id': tag['data-id']}
