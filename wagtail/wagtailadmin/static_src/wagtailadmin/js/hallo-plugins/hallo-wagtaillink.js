@@ -49,12 +49,12 @@
                         modal = ModalWorkflow({
                             url: url,
                             bind: {
-                                'click': function(e) {
+                                click: function(e) {
                                     if (!$(e.target).is('p.link-types a')) return;
                                     var link = e.target;
                                     modal.loadUrl(link.href);
                                     return false;
-                                },
+                                }
                             },
                             responses: {
                                 linkChosen: function(link) {
