@@ -1,28 +1,22 @@
 from __future__ import absolute_import, print_function, unicode_literals
 
-import bisect
+from functools import total_ordering
 
 from django.forms.utils import flatatt
+from django.utils.encoding import python_2_unicode_compatible
 from django.utils.functional import cached_property
 from django.utils.html import escape
 from django.utils.translation import ugettext_lazy as _
-
 from wagtail.wagtailcore import hooks
 from wagtail.wagtailcore.models import Page
 
 
 class LinkChooserRegistry(object):
 
-    def add(self, item, priority=900):
-        bisect.insort(self.items, (priority, item))
-
-    def remove(self, item):
-        self.items = [pair for pair in self.items if pair[1] != item]
-
     @cached_property
     def items(self):
         registered_hooks = hooks.get_hooks('register_rich_text_link_chooser')
-        return sorted({hook() for hook in registered_hooks})
+        return sorted(hook() for hook in registered_hooks)
 
     def __iter__(self):
         return iter(self.items)
@@ -34,11 +28,29 @@ class LinkChooserRegistry(object):
 registry = LinkChooserRegistry()
 
 
+@total_ordering
+@python_2_unicode_compatible
 class LinkChooser(object):
-    def __cmp__(self, other):
+    id = None
+    title = None
+    url_name = None
+    priority = None
+
+    def __eq__(self, other):
         if not isinstance(other, LinkChooser):
             return NotImplemented
-        return cmp(self.priority, other.priority)
+        return self.priority == other.priority
+
+    def __lt__(self, other):
+        if not isinstance(other, LinkChooser):
+            return NotImplemented
+        return self.priority < other.priority
+
+    def __str__(self):
+        return 'LinkChooser({})'.format(self.id)
+
+    def __repr__(self):
+        return '<{}.{}>'.format(self.__class__.__module__, self.__class__.__name__)
 
 
 class InternalLinkChooser(LinkChooser):

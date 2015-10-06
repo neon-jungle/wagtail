@@ -69,7 +69,7 @@ def register_permissions():
 
 @hooks.register('register_rich_text_link_chooser')
 def register_document_link_chooser():
-    return DocumentLinkHandler
+    return DocumentLinkHandler()
 
 
 class DocumentsSummaryItem(SummaryItem):

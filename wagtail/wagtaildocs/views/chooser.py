@@ -4,15 +4,14 @@ from django.core.urlresolvers import reverse
 from django.shortcuts import get_object_or_404, render
 
 from wagtail.utils.pagination import paginate
-from wagtail.wagtailadmin.modal_workflow import render_modal_workflow
 from wagtail.wagtailadmin.forms import SearchForm
+from wagtail.wagtailadmin.modal_workflow import render_modal_workflow
 from wagtail.wagtailadmin.utils import PermissionPolicyChecker
-from wagtail.wagtailsearch.backends import get_search_backends
-
-from wagtail.wagtaildocs.models import get_document_model
 from wagtail.wagtaildocs.forms import get_document_form
+from wagtail.wagtaildocs.models import get_document_model
 from wagtail.wagtaildocs.permissions import permission_policy
-
+from wagtail.wagtaildocs.rich_text import DocumentLinkHandler
+from wagtail.wagtailsearch.backends import get_search_backends
 
 permission_checker = PermissionPolicyChecker(permission_policy)
 
@@ -24,9 +23,11 @@ def get_document_json(document):
     """
 
     return json.dumps({
-        'id': document.id,
+        'type': DocumentLinkHandler.id,
         'title': document.title,
+        'url': reverse('wagtaildocs_serve', args=(document.id, document.filename)),
         'edit_link': reverse('wagtaildocs:edit', args=(document.id,)),
+        'data': {'id': document.id},
     })
 
 
