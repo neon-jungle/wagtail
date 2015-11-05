@@ -353,36 +353,37 @@ ul.listing{
     }
 
     &.images {
-        .image{
+        .image {
             position: relative;
         }
         
-        .progress{
+        .progress {
             position: absolute;
             top: 50%;
             left: 0;
             right: 0;
         }
 
-        .upload-success .image{
+        .upload-success .image {
             @include transition(all 0.3s cubic-bezier(0.175, 0.885, 0.320, 1.275));
             @include transform(translate3d(0,0,0));
             @include transform(scale(0.5));
         }
-        .upload-success-response .image{
+        .upload-success-response .image {
             @include transform(scale(1));
         }
 
-        .upload-failure{
-            display:none;
+        .upload-failure {
+            display: none;
         }
 
-        img{
+        img {
             @include transition(border-color 0.2s ease);
             border: 3px solid white;
         }
     }
 }
+
 ul.listing{
     border-top:1px dashed $color-input-border;
     margin-bottom:2em;
@@ -519,7 +520,7 @@ table.listing{
                 border:1px solid $color-grey-4;
                 border-width:1px 1px 1px 0px;
 
-                .image{
+                .image {
                     text-align:center;
                     height:180px;
 
@@ -532,8 +533,9 @@ table.listing{
                     }
 
                     // img is obvious I'd hope. Canvas is for images displayed using file API and query upload plugins
-                    img, canvas{
-                        display:inline-block;
+                    img, 
+                    canvas{
+                        display: inline-block;
                         vertical-align: middle;
                     }
                 }
@@ -546,7 +548,7 @@ table.listing{
                     }
                 }
 
-                .progress{
+                .progress {
                     left: 1.3em;
                     right: 1.3em;
                 }

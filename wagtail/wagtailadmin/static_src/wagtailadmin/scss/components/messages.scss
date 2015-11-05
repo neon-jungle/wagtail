@@ -75,15 +75,15 @@
 }
 
 .ready .messages ul,
-.messages.new.appear ul{
+.messages.new.appear ul {
     @include transition-immediate(all 0.5s ease);
-    opacity:1;
-    top:0;
+    opacity: 1;
+    top: 0;
 }
 
-.messages.new ul{
+.messages.new ul {
     @include transition-immediate(none);
-    top:-100px;
+    top: -100px;
 }
 
 
