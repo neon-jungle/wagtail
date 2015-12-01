@@ -20,6 +20,7 @@ from wagtail.wagtailadmin import widgets
 from wagtail.wagtailcore.models import Page
 from wagtail.wagtailcore.utils import camelcase_to_underscore, resolve_model_string
 from wagtail.utils.compat import get_related_model, get_related_parent_model
+from wagtail.utils.decorators import cached_classmethod
 
 
 # Form field properties to override whenever we encounter a model field
@@ -286,42 +287,27 @@ class BaseCompositeEditHandler(EditHandler):
     Abstract class for EditHandlers that manage a set of sub-EditHandlers.
     Concrete subclasses must attach a 'children' property
     """
-    _widget_overrides = None
-
-    @classmethod
+    @cached_classmethod
     def widget_overrides(cls):
-        if cls._widget_overrides is None:
-            # build a collated version of all its children's widget lists
-            widgets = {}
-            for handler_class in cls.children:
-                widgets.update(handler_class.widget_overrides())
-            cls._widget_overrides = widgets
+        # build a collated version of all its children's widget lists
+        widgets = {}
+        for handler_class in cls.children:
+            widgets.update(handler_class.widget_overrides())
+        return widgets
 
-        return cls._widget_overrides
-
-    _required_fields = None
-
-    @classmethod
+    @cached_classmethod
     def required_fields(cls):
-        if cls._required_fields is None:
-            fields = []
-            for handler_class in cls.children:
-                fields.extend(handler_class.required_fields())
-            cls._required_fields = fields
+        fields = []
+        for handler_class in cls.children:
+            fields.extend(handler_class.required_fields())
+        return fields
 
-        return cls._required_fields
-
-    _required_formsets = None
-
-    @classmethod
+    @cached_classmethod
     def required_formsets(cls):
-        if cls._required_formsets is None:
-            formsets = {}
-            for handler_class in cls.children:
-                formsets.update(handler_class.required_formsets())
-            cls._required_formsets = formsets
-
-        return cls._required_formsets
+        formsets = {}
+        for handler_class in cls.children:
+            formsets.update(handler_class.required_formsets())
+        return formsets
 
     @classmethod
     def html_declarations(cls):
@@ -547,35 +533,30 @@ class BaseChooserPanel(BaseFieldPanel):
 class BasePageChooserPanel(BaseChooserPanel):
     object_type_name = "page"
 
-    _target_content_type = None
-
     @classmethod
     def widget_overrides(cls):
         return {cls.field_name: widgets.AdminPageChooser(
             content_type=cls.target_content_type(), can_choose_root=cls.can_choose_root)}
 
-    @classmethod
+    @cached_classmethod
     def target_content_type(cls):
-        if cls._target_content_type is None:
-            if cls.page_type:
-                target_models = []
+        if cls.page_type:
+            target_models = []
 
-                for page_type in cls.page_type:
-                    try:
-                        target_models.append(resolve_model_string(page_type))
-                    except LookupError:
-                        raise ImproperlyConfigured("{0}.page_type must be of the form 'app_label.model_name', given {1!r}".format(
-                            cls.__name__, page_type))
-                    except ValueError:
-                        raise ImproperlyConfigured("{0}.page_type refers to model {1!r} that has not been installed".format(
-                            cls.__name__, page_type))
+            for page_type in cls.page_type:
+                try:
+                    target_models.append(resolve_model_string(page_type))
+                except LookupError:
+                    raise ImproperlyConfigured("{0}.page_type must be of the form 'app_label.model_name', given {1!r}".format(
+                        cls.__name__, page_type))
+                except ValueError:
+                    raise ImproperlyConfigured("{0}.page_type refers to model {1!r} that has not been installed".format(
+                        cls.__name__, page_type))
 
-                cls._target_content_type = list(ContentType.objects.get_for_models(*target_models).values())
-            else:
-                target_model = cls.model._meta.get_field(cls.field_name).rel.to
-                cls._target_content_type = [ContentType.objects.get_for_model(target_model)]
-
-        return cls._target_content_type
+            return list(ContentType.objects.get_for_models(*target_models).values())
+        else:
+            target_model = cls.model._meta.get_field(cls.field_name).rel.to
+            return [ContentType.objects.get_for_model(target_model)]
 
 
 class PageChooserPanel(object):
@@ -611,15 +592,10 @@ class BaseInlinePanel(EditHandler):
         else:
             return extract_panel_definitions_from_model_class(get_related_model(cls.related), exclude=[cls.related.field.name])
 
-    _child_edit_handler_class = None
-
-    @classmethod
+    @cached_classmethod
     def get_child_edit_handler_class(cls):
-        if cls._child_edit_handler_class is None:
-            panels = cls.get_panel_definitions()
-            cls._child_edit_handler_class = MultiFieldPanel(panels, heading=cls.heading).bind_to_model(get_related_model(cls.related))
-
-        return cls._child_edit_handler_class
+        panels = cls.get_panel_definitions()
+        return MultiFieldPanel(panels, heading=cls.heading).bind_to_model(get_related_model(cls.related))
 
     @classmethod
     def required_formsets(cls):

@@ -42,6 +42,7 @@ from wagtail.wagtailcore.signals import page_published, page_unpublished
 from wagtail.wagtailsearch import index
 from wagtail.wagtailsearch.backends import get_search_backend
 
+from wagtail.utils.decorators import cached_classmethod
 from wagtail.utils.deprecation import RemovedInWagtail14Warning
 
 
@@ -200,9 +201,6 @@ class PageBase(models.base.ModelBase):
 
         if 'ajax_template' not in dct:
             cls.ajax_template = None
-
-        cls._clean_subpage_types = None  # to be filled in on first call to cls.clean_subpage_types
-        cls._clean_parent_page_types = None  # to be filled in on first call to cls.clean_parent_page_types
 
         # All pages should be creatable unless explicitly set otherwise.
         # This attribute is not inheritable.
@@ -605,55 +603,49 @@ class Page(six.with_metaclass(PageBase, MP_Node, ClusterableModel, index.Indexed
         s = get_search_backend()
         return s.search(query_string, cls, fields=fields, filters=filters, prefetch_related=prefetch_related)
 
-    @classmethod
+    @cached_classmethod
     def clean_subpage_types(cls):
         """
         Returns the list of subpage types, with strings converted to class objects
         where required
         """
-        if cls._clean_subpage_types is None:
-            subpage_types = getattr(cls, 'subpage_types', None)
-            if subpage_types is None:
-                # if subpage_types is not specified on the Page class, allow all page types as subpages
-                res = get_page_types()
-            else:
-                try:
-                    models = [resolve_model_string(model_string, cls._meta.app_label)
-                              for model_string in subpage_types]
-                except LookupError as err:
-                    raise ImproperlyConfigured("{0}.subpage_types must be a list of 'app_label.model_name' strings, given {1!r}".format(
-                        cls.__name__, err.args[1]))
-                res = list(map(ContentType.objects.get_for_model, models))
+        subpage_types = getattr(cls, 'subpage_types', None)
+        if subpage_types is None:
+            # if subpage_types is not specified on the Page class, allow all page types as subpages
+            res = get_page_types()
+        else:
+            try:
+                models = [resolve_model_string(model_string, cls._meta.app_label)
+                          for model_string in subpage_types]
+            except LookupError as err:
+                raise ImproperlyConfigured("{0}.subpage_types must be a list of 'app_label.model_name' strings, given {1!r}".format(
+                    cls.__name__, err.args[1]))
+            res = list(map(ContentType.objects.get_for_model, models))
 
-            cls._clean_subpage_types = res
+        return res
 
-        return cls._clean_subpage_types
-
-    @classmethod
+    @cached_classmethod
     def clean_parent_page_types(cls):
         """
         Returns the list of parent page types, with strings converted to class
         objects where required
         """
-        if cls._clean_parent_page_types is None:
-            parent_page_types = getattr(cls, 'parent_page_types', None)
-            if parent_page_types is None:
-                # if parent_page_types is not specified on the Page class, allow all page types as subpages
-                res = get_page_types()
-            else:
-                try:
-                    models = [resolve_model_string(model_string, cls._meta.app_label)
-                              for model_string in parent_page_types]
-                except LookupError as err:
-                    raise ImproperlyConfigured("{0}.parent_page_types must be a list of 'app_label.model_name' strings, given {1!r}".format(
-                        cls.__name__, err.args[1]))
-                res = list(map(ContentType.objects.get_for_model, models))
+        parent_page_types = getattr(cls, 'parent_page_types', None)
+        if parent_page_types is None:
+            # if parent_page_types is not specified on the Page class, allow all page types as subpages
+            res = get_page_types()
+        else:
+            try:
+                models = [resolve_model_string(model_string, cls._meta.app_label)
+                          for model_string in parent_page_types]
+            except LookupError as err:
+                raise ImproperlyConfigured("{0}.parent_page_types must be a list of 'app_label.model_name' strings, given {1!r}".format(
+                    cls.__name__, err.args[1]))
+            res = list(map(ContentType.objects.get_for_model, models))
 
-            cls._clean_parent_page_types = res
+        return res
 
-        return cls._clean_parent_page_types
-
-    @classmethod
+    @cached_classmethod
     def allowed_parent_page_types(cls):
         """
         Returns the list of page types that this page type can be a subpage of
@@ -662,10 +654,10 @@ class Page(six.with_metaclass(PageBase, MP_Node, ClusterableModel, index.Indexed
         return [ct for ct in cls.clean_parent_page_types()
                 if cls_ct in ct.model_class().clean_subpage_types()]
 
-    @classmethod
+    @cached_classmethod
     def allowed_subpage_types(cls):
         """
-        Returns the list of page types that this page type can be a subpage of
+        Returns the list of page types that this page type can be a parent of
         """
         # Special case the 'Page' class, such as the Root page or Home page -
         # otherwise you can not add initial pages when setting up a site
