@@ -2,10 +2,8 @@ from __future__ import absolute_import, print_function, unicode_literals
 
 from functools import total_ordering
 
-from django.forms.utils import flatatt
 from django.utils.encoding import python_2_unicode_compatible
 from django.utils.functional import cached_property
-from django.utils.html import escape
 from django.utils.translation import ugettext_lazy as _
 from wagtail.wagtailcore import hooks
 from wagtail.wagtailcore.models import Page
@@ -52,6 +50,28 @@ class LinkChooser(object):
     def __repr__(self):
         return '<{}.{}>'.format(self.__class__.__module__, self.__class__.__name__)
 
+    @classmethod
+    def get_db_attributes(cls, tag):
+        """
+        Given an element from a RichText editor, return a dict of all the
+        attributes required to store the element in the database
+        representation.
+
+        The opposite of ``expand_db_attributes``.
+        """
+        raise NotImplementedError()
+
+    @staticmethod
+    def expand_db_attributes(cls, attrs, for_editor):
+        """
+        Given a dict of attributes from a link in some RichText stored in the
+        database, return a dict of HTML attributes to build an ``<a>`` tag.
+
+        If ``for_editor`` is true, the RichText is being edited, otherwise it
+        is being displayed to the user.
+        """
+        raise NotImplementedError()
+
 
 class InternalLinkChooser(LinkChooser):
     """
@@ -66,8 +86,8 @@ class InternalLinkChooser(LinkChooser):
     url_name = 'wagtailadmin_choose_page'
     priority = 100
 
-    @staticmethod
-    def get_db_attributes(tag):
+    @classmethod
+    def get_db_attributes(cls, tag):
         """
         Given an <a> tag that we've identified as a page link embed (because it has a
         data-linktype="page" attribute), return a dict of the attributes we should
@@ -75,32 +95,30 @@ class InternalLinkChooser(LinkChooser):
         """
         return {'id': tag['data-id']}
 
-    @staticmethod
-    def expand_db_attributes(attrs, for_editor):
+    @classmethod
+    def expand_db_attributes(cls, attrs, for_editor):
         try:
             page = Page.objects.get(id=attrs['id'])
-
-            if for_editor:
-                editor_attrs = 'data-linktype="page" data-id="%d" ' % page.id
-            else:
-                editor_attrs = ''
-
-            return '<a %shref="%s">' % (editor_attrs, escape(page.url))
         except Page.DoesNotExist:
-            return "<a>"
+            return {}
+
+        attrs = {'href': page.url}
+        if for_editor:
+            attrs['data-id'] = page.id
+        return attrs
 
 
 class SimpleLinkChooser(LinkChooser):
+    """
+    A link type that only has an href.
+    """
     @classmethod
     def get_db_attributes(cls, tag):
         return {'href': tag['href']}
 
     @classmethod
     def expand_db_attributes(cls, attrs, for_editor):
-        attrs = {'href': attrs['href']}
-        if for_editor:
-            attrs['data-linktype'] = cls.id
-        return '<a{}>'.format(flatatt(attrs))
+        return {'href': attrs['href']}
 
 
 class ExternalLinkChooser(SimpleLinkChooser):

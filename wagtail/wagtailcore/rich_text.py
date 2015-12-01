@@ -1,15 +1,14 @@
-from __future__ import unicode_literals  # ensure that RichText.__str__ returns unicode
+from __future__ import unicode_literals
 
 import re  # parsing HTML with regexes LIKE A BOSS.
 
+from django.forms.utils import flatatt
 from django.utils.encoding import python_2_unicode_compatible
-from django.utils.safestring import mark_safe
 from django.utils.lru_cache import lru_cache
-
-from wagtail.wagtailcore.whitelist import Whitelister
-from wagtail.wagtailcore import hooks
+from django.utils.safestring import mark_safe
 from wagtail.wagtailadmin.link_choosers import registry as link_chooser_registry
-
+from wagtail.wagtailcore import hooks
+from wagtail.wagtailcore.whitelist import Whitelister
 
 # Define a set of 'embed handlers' and 'link handlers'. These handle the translation
 # of 'special' HTML elements in rich text - ones which we do not want to include
@@ -127,7 +126,10 @@ def expand_db_html(html, for_editor=False):
             # return unchanged
             return m.group(0)
         handler = get_link_handler(attrs['linktype'])
-        return handler.expand_db_attributes(attrs, for_editor)
+        attrs = handler.expand_db_attributes(attrs, for_editor)
+        if for_editor:
+            attrs['data-linktype'] = handler.id
+        return '<a{}>'.format(flatatt(attrs))
 
     def replace_embed_tag(m):
         attrs = extract_attrs(m.group(1))
