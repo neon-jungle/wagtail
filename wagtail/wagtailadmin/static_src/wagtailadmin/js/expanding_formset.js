@@ -22,6 +22,7 @@ function buildExpandingFormset(prefix, opts) {
     }
 
     addButton.click(function() {
+        console.log('I was clicked');
         if (addButton.hasClass('disabled')) return false;
         var newFormHtml = emptyFormTemplate
             .replace(/__prefix__/g, formCount)

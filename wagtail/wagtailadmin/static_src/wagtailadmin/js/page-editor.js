@@ -141,6 +141,18 @@ function InlinePanel(opts) {
         }
     };
 
+    var emptyFormTemplate = document.getElementById(opts.formsetPrefix + '-EMPTY_FORM_TEMPLATE');
+    if (emptyFormTemplate.innerText) {
+        emptyFormTemplate = emptyFormTemplate.innerText;
+    } else if (emptyFormTemplate.textContent) {
+        emptyFormTemplate = emptyFormTemplate.textContent;
+    }
+
+    var addButton = $('#' + opts.formsetPrefix + '-ADD');
+    var formContainer = $('#' + opts.formsetPrefix + '-FORMS');
+    var totalFormsInput = $('#' + opts.formsetPrefix + '-TOTAL_FORMS');
+    var formCount = parseInt(totalFormsInput.val(), 10);
+
     self.initChildControls = function(prefix) {
         var childId = 'inline_child_' + prefix;
         var deleteInputId = 'id_' + prefix + '-DELETE';
@@ -156,6 +168,34 @@ function InlinePanel(opts) {
                 self.updateAddButtonState();
                 self.setHasContent();
             });
+        });
+
+        $('#' + prefix + '-add-new').click(function() {
+            console.log("Working");
+            var currentChild = $('#' + childId);
+            var currentChildOrderElem = currentChild.find('input[name$="-ORDER"]');
+            var currentChildOrder = currentChildOrderElem.val();
+
+            /* find the next visible 'inline_child' li after this one */
+            var nextChild = currentChild.next(':visible');
+            if (!nextChild.length) return;
+            var nextChildOrderElem = nextChild.find('input[name$="-ORDER"]');
+            var nextChildOrder = nextChildOrderElem.val();
+
+            if (addButton.hasClass('disabled')) return false;
+            var newFormHtml = emptyFormTemplate
+                .replace(/__prefix__/g, formCount)
+                .replace(/<-(-*)\/script>/g, '<$1/script>');
+            if (opts.onAdd) opts.onAdd(formCount);
+            if (opts.onInit) opts.onInit(formCount);
+
+            $(newFormHtml).insertBefore(currentChild);
+            currentChildOrderElem.val(currentChildOrder);
+            nextChildOrderElem.val(currentChildOrder + 1);
+
+            formCount++;
+            totalFormsInput.val(formCount);
+
         });
 
         if (opts.canOrder) {
