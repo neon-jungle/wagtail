@@ -1,26 +1,27 @@
 import django
-from django.http import Http404, HttpResponse
-from django.shortcuts import render, redirect, get_object_or_404
-from django.core.exceptions import ValidationError, PermissionDenied
 from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.urlresolvers import reverse
+from django.db.models import Count
+from django.http import Http404, HttpResponse
+from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
-from django.utils.translation import ugettext as _
 from django.utils.http import is_safe_url
+from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_GET, require_POST
 from django.views.decorators.vary import vary_on_headers
-from django.db.models import Count
 
 from wagtail.utils.pagination import paginate
-from wagtail.wagtailadmin.edit_handlers import TabbedInterface, ObjectList
-from wagtail.wagtailadmin.forms import SearchForm, CopyForm
+from wagtail.wagtailadmin import messages, signals
+from wagtail.wagtailadmin.edit_handlers import ObjectList, TabbedInterface
+from wagtail.wagtailadmin.forms import CopyForm, SearchForm
 from wagtail.wagtailadmin.utils import send_notification
-from wagtail.wagtailadmin import signals
-
 from wagtail.wagtailcore import hooks
-from wagtail.wagtailcore.models import Page, PageRevision, get_navigation_menu_items
+from wagtail.wagtailcore.models import (
+    Page, PageRevision, get_navigation_menu_items)
+from wagtail.wagtailcore.moderation import get_moderation_workflow
 
-from wagtail.wagtailadmin import messages
+moderation = get_moderation_workflow()
 
 
 def explorer_nav(request):
@@ -186,7 +187,6 @@ def create(request, content_type_app_name, content_type_model_name, parent_page_
                         messages.button(reverse('wagtailadmin_pages:edit', args=(page.id,)), _('Edit'))
                     ]
                 )
-                send_notification(page.get_latest_revision().id, 'submitted', request.user.id)
             else:
                 messages.success(request, _("Page '{0}' created.").format(page.title))
 
@@ -269,7 +269,6 @@ def edit(request, page_id):
                     messages.button(reverse('wagtailadmin_pages:view_draft', args=(page_id,)), _('View draft')),
                     messages.button(reverse('wagtailadmin_pages:edit', args=(page_id,)), _('Edit'))
                 ])
-                send_notification(page.get_latest_revision().id, 'submitted', request.user.id)
             else:
                 messages.success(request, _("Page '{0}' updated.").format(page.title))
 
@@ -292,8 +291,7 @@ def edit(request, page_id):
 
             edit_handler = edit_handler_class(instance=page, form=form)
             errors_debug = (
-                repr(edit_handler.form.errors)
-                + repr(
+                repr(edit_handler.form.errors) + repr(
                     [(name, formset.errors) for (name, formset) in edit_handler.form.formsets.items() if formset.errors]
                 )
             )
@@ -726,41 +724,12 @@ def search(request):
 
 def approve_moderation(request, revision_id):
     revision = get_object_or_404(PageRevision, id=revision_id)
-    if not revision.page.permissions_for_user(request.user).can_publish():
-        raise PermissionDenied
-
-    if not revision.submitted_for_moderation:
-        messages.error(request, _("The page '{0}' is not currently awaiting moderation.").format(revision.page.title))
-        return redirect('wagtailadmin_home')
-
-    if request.method == 'POST':
-        revision.approve_moderation()
-        messages.success(request, _("Page '{0}' published.").format(revision.page.title), buttons=[
-            messages.button(revision.page.url, _('View live')),
-            messages.button(reverse('wagtailadmin_pages:edit', args=(revision.page.id,)), _('Edit'))
-        ])
-        send_notification(revision.id, 'approved', request.user.id)
-
-    return redirect('wagtailadmin_home')
+    return moderation.approve(request, revision, request.user)
 
 
 def reject_moderation(request, revision_id):
     revision = get_object_or_404(PageRevision, id=revision_id)
-    if not revision.page.permissions_for_user(request.user).can_publish():
-        raise PermissionDenied
-
-    if not revision.submitted_for_moderation:
-        messages.error(request, _("The page '{0}' is not currently awaiting moderation.").format(revision.page.title))
-        return redirect('wagtailadmin_home')
-
-    if request.method == 'POST':
-        revision.reject_moderation()
-        messages.success(request, _("Page '{0}' rejected for publication.").format(revision.page.title), buttons=[
-            messages.button(reverse('wagtailadmin_pages:edit', args=(revision.page.id,)), _('Edit'))
-        ])
-        send_notification(revision.id, 'rejected', request.user.id)
-
-    return redirect('wagtailadmin_home')
+    return moderation.reject(request, revision, request.user)
 
 
 @require_GET
