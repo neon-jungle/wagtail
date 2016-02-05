@@ -13,7 +13,7 @@ class LinkChooserRegistry(object):
 
     @cached_property
     def items(self):
-        registered_hooks = hooks.get_hooks('register_rich_text_link_chooser')
+        registered_hooks = hooks.get_hooks('register_link_chooser')
         return sorted(hook() for hook in registered_hooks)
 
     def __iter__(self):

@@ -35,12 +35,12 @@ def get_embed_handler(embed_type):
 
 
 @lru_cache()
-def get_link_handlers():
+def get_link_choosers():
     return {handler.id: handler for handler in link_chooser_registry}
 
 
-def get_link_handler(link_type):
-    return get_link_handlers()[link_type]
+def get_link_chooser(link_type):
+    return get_link_choosers()[link_type]
 
 
 class DbWhitelister(Whitelister):
@@ -88,7 +88,7 @@ class DbWhitelister(Whitelister):
                 cls.clean_node(doc, child)
 
             link_type = tag['data-linktype']
-            link_handler = get_link_handler(link_type)
+            link_handler = get_link_chooser(link_type)
             link_attrs = link_handler.get_db_attributes(tag)
             link_attrs['linktype'] = link_type
             tag.attrs.clear()
@@ -125,7 +125,7 @@ def expand_db_html(html, for_editor=False):
         if 'linktype' not in attrs:
             # return unchanged
             return m.group(0)
-        handler = get_link_handler(attrs['linktype'])
+        handler = get_link_chooser(attrs['linktype'])
         attrs = handler.expand_db_attributes(attrs, for_editor)
         if for_editor:
             attrs['data-linktype'] = handler.id

@@ -67,7 +67,7 @@ def register_permissions():
                                      codename__in=['add_document', 'change_document'])
 
 
-@hooks.register('register_rich_text_link_chooser')
+@hooks.register('register_link_chooser')
 def register_document_link_chooser():
     return DocumentLinkHandler()
 

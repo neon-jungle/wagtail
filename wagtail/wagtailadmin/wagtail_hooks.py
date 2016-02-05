@@ -46,16 +46,16 @@ def register_pages_search_area():
         order=100)
 
 
-@hooks.register('register_rich_text_link_chooser')
+@hooks.register('register_link_chooser')
 def register_internal_link_chooser():
     return InternalLinkChooser()
 
 
-@hooks.register('register_rich_text_link_chooser')
+@hooks.register('register_link_chooser')
 def register_external_link_chooser():
     return ExternalLinkChooser()
 
 
-@hooks.register('register_rich_text_link_chooser')
+@hooks.register('register_link_chooser')
 def register_email_link_chooser():
     return EmailLinkChooser()
