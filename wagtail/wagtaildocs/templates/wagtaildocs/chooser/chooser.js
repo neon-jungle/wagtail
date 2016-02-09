@@ -1,4 +1,9 @@
 function(modal) {
+
+    var $tab = $('[data-link-type="document"]');
+    $tab.parent().addClass('modal-tabs__item--secondary');
+
+
     function ajaxifyLinks (context) {
         $('a.document-choice', context).click(function() {
             modal.loadUrl(this.href);
