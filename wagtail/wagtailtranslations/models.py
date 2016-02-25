@@ -38,10 +38,10 @@ class Translation(models.Model):
 
     class Meta:
         abstract = True
-        unique_together = [['page', 'language']]
+        unique_together = [['parent', 'language']]
 
     def __str__(self):
-        return '{} translation for {}'.format(self.language, self.page)
+        return '{} translation for {}'.format(self.language, self.parent)
 
 
 class TranslatedField(object):
@@ -60,17 +60,14 @@ class TranslatedField(object):
         delattr(instance.translation, self.field_name)
 
 
-class TranslatedPageBase(PageBase):
+class TranslatedModelBase(ModelBase):
     def __new__(mcs, name, bases, attrs):
         if 'TranslatedFields' not in attrs:
-            return super(TranslatedPageBase, mcs).__new__(mcs, name, bases, attrs)
+            return super(TranslatedModelBase, mcs).__new__(mcs, name, bases, attrs)
 
         TranslatedFields = attrs.pop('TranslatedFields')
 
-        cls = super(TranslatedPageBase, mcs).__new__(mcs, name, bases, attrs)
-
-        if not cls._meta.abstract and type(cls.objects) in (models.Manager, PageManager):
-            TranslatedPageManager().contribute_to_class(cls, 'objects')
+        cls = super(TranslatedModelBase, mcs).__new__(mcs, name, bases, attrs)
 
         fields = {
             attr: value for attr, value in TranslatedFields.__dict__.items()
@@ -88,7 +85,7 @@ class TranslatedPageBase(PageBase):
         name = cls.__name__ + 'Translation'
         attrs = {
             '__module__': cls.__module__,
-            'page': models.ForeignKey(cls, on_delete=models.CASCADE,
+            'parent': models.ForeignKey(cls, on_delete=models.CASCADE,
                                       related_name='translations')}
         attrs.update(fields)
 
@@ -113,14 +110,14 @@ class LanguagePrefetch(models.Prefetch):
     queryset = property(_get_queryset, _set_queryset)
 
 
-class TranslatedPageManager(PageManager):
+class TranslatedModelManager(models.Manager):
     def get_queryset(self):
         # Automatically prefetch the translation for the current language
-        return super(TranslatedPageManager, self).get_queryset().prefetch_related(
+        return super(TranslatedModelManager, self).get_queryset().prefetch_related(
             LanguagePrefetch(self.model.Translation))
 
 
-class TranslatedPage(six.with_metaclass(TranslatedPageBase, Page)):
+class TranslatedModel(six.with_metaclass(TranslatedModelBase, models.Model)):
 
     _translation = None
     _prefetched_translations = None
@@ -129,7 +126,7 @@ class TranslatedPage(six.with_metaclass(TranslatedPageBase, Page)):
         abstract = True
 
     def __init__(self, *args, **kwargs):
-        super(TranslatedPage, self).__init__(*args, **kwargs)
+        super(TranslatedModel, self).__init__(*args, **kwargs)
 
     @cached_property
     def translation(self):
@@ -148,6 +145,25 @@ class TranslatedPage(six.with_metaclass(TranslatedPageBase, Page)):
 
         # Other otherwise, make an empty translation
         if translation is None:
-            translation = self.Translation(page=self, language=current_language)
+            translation = self.Translation(parent=self, language=current_language)
 
         return translation
+
+
+class TranslatedPageManager(TranslatedModelManager, PageManager):
+    pass
+
+
+class TranslatedPageBase(TranslatedModelBase, PageBase):
+    def __new__(mcs, name, bases, attrs):
+        cls = super(TranslatedPageBase, mcs).__new__(mcs, name, bases, attrs)
+        if not cls._meta.abstract and type(cls.objects) in (models.Manager, PageManager):
+            TranslatedPageManager().contribute_to_class(cls, 'objects')
+        return cls
+
+
+class TranslatedPage(six.with_metaclass(TranslatedPageBase, TranslatedModel, Page)):
+    objects = TranslatedPageManager()
+
+    class Meta:
+        abstract = True
