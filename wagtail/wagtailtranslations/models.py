@@ -2,15 +2,47 @@ from django.conf import settings
 from django.db import models
 from django.db.models.base import ModelBase
 from django.utils import six
-from django.utils.translation import get_language
+from django.utils.encoding import python_2_unicode_compatible
 from django.utils.functional import cached_property
+from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import get_language
 
-from wagtail.wagtailcore.models import (
-    PageManager, Page, PageBase)
+from wagtail.wagtailcore.models import Page, PageBase, PageManager
+from wagtail.wagtailsnippets.models import register_snippet
 
 
 def get_current_or_default_language():
     return get_language() or settings.LANGUAGE_CODE
+
+
+class LanguageQuerySet(models.QuerySet):
+    def active(self):
+        return self.filter(active=True)
+
+
+@register_snippet
+@python_2_unicode_compatible
+class Language(models.Model):
+    code = models.CharField(
+        max_length=10, choices=settings.LANGUAGES, unique=True)
+    name_override = models.CharField(
+        blank=True, max_length=100,
+        help_text=_('Override the default name displayed for this language. Leave this field blank to use the default name.'))
+    active = models.BooleanField(
+        default=True,
+        help_text=_('Whether this language is available to visitors'))
+
+    objects = LanguageQuerySet.as_manager()
+
+    class Meta:
+        ordering = ['code']
+
+    @property
+    def name(self):
+        return self.name_override or self.get_code_display()
+
+    def __str__(self):
+        return self.name
 
 
 class TranslationQuerySet(models.QuerySet):
@@ -19,12 +51,12 @@ class TranslationQuerySet(models.QuerySet):
         current_language = get_current_or_default_language()
 
         if default_language == current_language:
-            return self.filter(language=current_language)
+            return self.filter(language__code=current_language)
 
         # Use the default language as a fallback if the current language does
         # not exist
         languages = [current_language, default_language]
-        qs = self.filter(language__in=languages).order_by('language')
+        qs = self.filter(language__code__in=languages).order_by('language__code')
         # Ensure the current language precedes the default language
         if current_language > default_language:
             qs = qs.reverse()
@@ -32,7 +64,7 @@ class TranslationQuerySet(models.QuerySet):
 
 
 class Translation(models.Model):
-    language = models.CharField(choices=settings.LANGUAGES, max_length=10)
+    language = models.ForeignKey(Language)
 
     objects = TranslationQuerySet.as_manager()
 
@@ -135,19 +167,16 @@ class TranslatedModel(six.with_metaclass(TranslatedModelBase, models.Model)):
         # Try and use the prefetched translation, if used
         if self._prefetched_translations is not None:
             try:
-                translation = self._prefetched_translations[0]
+                return self._prefetched_translations[0]
             except IndexError:
                 pass
 
         # Otherwise, try and pull an existing translation from the database
         elif self.pk is not None:
-            translation = self.translations.current_then_default().first()
+            return self.translations.current_then_default().first()
 
         # Other otherwise, make an empty translation
-        if translation is None:
-            translation = self.Translation(parent=self, language=current_language)
-
-        return translation
+        return self.Translation(parent=self, language=current_language)
 
 
 class TranslatedPageManager(TranslatedModelManager, PageManager):
