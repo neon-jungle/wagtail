@@ -132,6 +132,52 @@ $(function() {
         $('.tab-nav a[href="' + $(this).attr('href') + '"]').click();
     });
 
+    // Small inline dropdowns...
+    $('[data-dropdown]').each(function() {
+        var el = this;
+        var ICON_DOWN = 'icon-arrow-down';
+        var ICON_UP = 'icon-arrow-up';
+        var IS_OPEN = 'is-open';
+        var clickEvent = 'click';
+        var TOGGLE = '[data-dropdown-toggle]';
+        var toggle = el.querySelector(TOGGLE);
+
+        function clickOutside(e) {
+            var relTarget = e.relatedTarget || e.toElement;
+
+            if (!$(relTarget).parents().is(el)) {
+                close();
+            }
+        }
+
+        function open(e) {
+            el.setAttribute('aria-hidden', false);
+            toggle.classList.remove(ICON_DOWN);
+            toggle.classList.add(ICON_UP);
+            document.addEventListener(clickEvent, clickOutside, false);
+        }
+
+        function close(e) {
+            document.removeEventListener(clickEvent, clickOutside, false);
+            el.classList.remove(IS_OPEN);
+            toggle.classList.add(ICON_DOWN);
+            toggle.classList.remove(ICON_UP);
+            el.setAttribute('aria-hidden', true);
+        }
+
+        el.addEventListener(clickEvent, function(e) {
+            el.classList.toggle(IS_OPEN);
+
+            if (el.classList.contains(IS_OPEN)) {
+                open(e);
+            } else {
+                close(e);
+            }
+        });
+    });
+
+
+
     $('.dropdown').each(function() {
         var $dropdown = $(this);
 
