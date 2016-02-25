@@ -247,7 +247,8 @@ class BaseDropdownMenuButton(Button):
     def render(self):
         return render_to_string(self.template_name, {
             'buttons': self.get_buttons_in_dropdown(),
-            'label': self.label})
+            'label': self.label,
+            'is_parent': self.is_parent})
 
 
 class ButtonWithDropdownFromHook(BaseDropdownMenuButton):
@@ -265,3 +266,4 @@ class ButtonWithDropdownFromHook(BaseDropdownMenuButton):
         return sorted(itertools.chain.from_iterable(
             hook(self.page, self.page_perms, self.is_parent)
             for hook in button_hooks))
+

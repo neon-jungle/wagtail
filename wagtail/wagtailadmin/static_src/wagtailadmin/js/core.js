@@ -132,6 +132,8 @@ $(function() {
         $('.tab-nav a[href="' + $(this).attr('href') + '"]').click();
     });
 
+    var LISTING_TITLE_SELECTOR = '[data-listing-page-title]';
+
     // Small inline dropdowns...
     $('[data-dropdown]').each(function() {
         var el = this;
@@ -174,8 +176,17 @@ $(function() {
                 close(e);
             }
         });
+
+        $(el).parents(LISTING_TITLE_SELECTOR).data('close', close);
     });
 
+    $(LISTING_TITLE_SELECTOR).each(function() {
+        var item = this;
+        item.addEventListener('mouseleave', function() {
+            var cb = $(item).data('close');
+            cb();
+        });
+    });
 
 
     $('.dropdown').each(function() {

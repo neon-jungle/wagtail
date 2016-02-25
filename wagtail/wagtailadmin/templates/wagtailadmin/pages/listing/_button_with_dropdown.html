@@ -20,6 +20,7 @@
     border-radius: 2px;
     font-size: 11px;
     cursor: pointer;
+    -webkit-font-smoothing: subpixel-antialiased;
 }
 
 .c-dropdown__toggle {
@@ -152,7 +153,7 @@
 }
 </style>
 
-<div class="c-dropdown  {{ theme|default:'t-default' }}" data-dropdown>
+<div class="c-dropdown  {% if is_parent %}t-inverted{% else %}t-default{% endif %}" data-dropdown>
     <a class="c-dropdown__button  u-btn-current">
         {{ label }}
         <div data-dropdown-toggle class="o-icon  c-dropdown__toggle  [ icon icon-arrow-down ]"></div>

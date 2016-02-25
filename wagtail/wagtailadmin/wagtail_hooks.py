@@ -68,7 +68,6 @@ def page_listing_buttons(page, page_perms, is_parent=False):
         page=page,
         page_perms=page_perms,
         is_parent=is_parent,
-        classes='t-inverted',
         attrs={'target': '_blank'}, priority=50)
 
 
