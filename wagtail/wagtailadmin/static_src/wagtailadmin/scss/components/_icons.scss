@@ -278,15 +278,15 @@
 .icon-view:before,
 .icon-no-view:before {
     vertical-align: -3.5px;
-    font-size: 1.1rem; 
+    font-size: 1.1rem;
 }
 
 .icon-view:before {
-    content: '4'; 
+    content: '4';
 }
 
 .icon-no-view:before {
-    content: '^'; 
+    content: '^';
 }
 
 .icon-collapse-down:before {
@@ -373,4 +373,11 @@
     to {
         transform: rotate(360deg);
     }
+}
+
+
+
+.icon-spinner:after {
+    display: inline-block;
+    line-height: 1;
 }
