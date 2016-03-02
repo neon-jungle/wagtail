@@ -5,7 +5,7 @@ import unittest
 
 from django import forms
 from django.forms.utils import ErrorList
-from django.core.exceptions import ValidationError
+from django.core.exceptions import NON_FIELD_ERRORS, ValidationError
 from django.test import TestCase, SimpleTestCase
 from django.utils.safestring import mark_safe, SafeData
 from django.utils.html import format_html
