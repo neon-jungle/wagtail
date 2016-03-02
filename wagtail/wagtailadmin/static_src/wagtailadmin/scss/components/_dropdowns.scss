@@ -1,4 +1,4 @@
-.c-dropdown__button.dropdown {
+.dropdown {
     @include clearfix();
     position: relative;
 
@@ -258,10 +258,11 @@
     position: absolute;
     z-index: 1;
     animation: dropdownIn .1s ease-out backwards;
+    list-style: none;
 }
 
 .c-dropdown__item {
-    margin-bottom: .75rem;
+    margin-bottom: .375rem;
 
     &:hover {
         .c-dropdown__indicator {
@@ -279,6 +280,8 @@
 .c-dropdown__divider {
     border-color: #555;
     border-style: dotted;
+    margin-top: 12px;
+    margin-bottom: 12px;
 }
 
 // =============================================================================
