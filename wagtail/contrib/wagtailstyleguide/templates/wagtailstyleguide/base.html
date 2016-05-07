@@ -493,11 +493,23 @@
         </section>
 
         <section id="header">
+            {% header title="Title" subtitle="Subtitle" icon="image" %}
+                {% block search_form %}{% endblock %}
+
+                {% block before_buttons %}{% endblock %}
+
+                {% block buttons %}
+                  {% wuibutton element="a" icon="plus" icon_bicolor=True %}Add{% endwuibutton %}
+                {% endblock %}
+            {% endheader %}
+
             <h2>Header</h2>
 
             {% include "wagtailadmin/shared/header.html" with title=title_trans %}
 
             {% include "wagtailadmin/shared/header.html" with title=title_trans add_link="wagtailimages:add" icon="image" add_text="button" search_url="wagtailimages:index" %}
+
+
         </section>
 
         <section id="forms">
