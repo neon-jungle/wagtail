@@ -1,0 +1,16 @@
+<header class="nice-padding hasform">
+    <div class="row">
+        <div class="left">
+            <div class="col">
+                <h1 {% if icon %}class="icon icon-{{ icon }}"{% endif %}>{{ title }}
+                  {% if subtitle %}<span>{{ subtitle }}</span>{% endif %}
+                </h1>
+            </div>
+            {{ blocks.search_form }}
+        </div>
+        <div class="right">
+            {{ blocks.before_buttons }}
+            {{ blocks.buttons }}
+        </div>
+    </div>
+</header>
