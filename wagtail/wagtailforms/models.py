@@ -151,7 +151,7 @@ def get_forms_for_user(user):
     return editable_forms
 
 
-class FormPageMixin(object):
+class FormPageMixin(models.Model):
     """
     A mixin class that includes form handling. Pages implementing a form should
     inherit from it.
@@ -273,12 +273,7 @@ class FormPageMixin(object):
             return super(FormPageMixin, self).serve_preview(request, mode)
 
 
-class AbstractForm(FormPageMixin, Page):
-    class Meta:
-        abstract = True
-
-
-class AbstractEmailForm(FormPageMixin, Page):
+class EmailFormPageMixin(FormPageMixin):
     """
     A Page class that includes form handling for sending emails.
     Pages implementing a form that sends email should inherit from this.
@@ -292,7 +287,7 @@ class AbstractEmailForm(FormPageMixin, Page):
     subject = models.CharField(verbose_name=_('subject'), max_length=255, blank=True)
 
     def process_form_submission(self, form):
-        submission = super(AbstractEmailForm, self).process_form_submission(form)
+        submission = super(EmailFormPageMixin, self).process_form_submission(form)
         if self.to_address:
             self.send_mail(form)
         return submission
@@ -302,5 +297,17 @@ class AbstractEmailForm(FormPageMixin, Page):
         content = '\n'.join([x[1].label + ': ' + text_type(form.data.get(x[0])) for x in form.fields.items()])
         send_mail(self.subject, content, addresses, self.from_address,)
 
+    class Meta:
+        abstract = True
+
+
+class AbstractForm(FormPageMixin, Page):
+    """Deprecated. Inherit from FormPageMixin and Page instead."""
+    class Meta:
+        abstract = True
+
+
+class AbstractEmailForm(EmailFormPageMixin, Page):
+    """Deprecated. Inherit from EmailFormPageMixin and Page instead."""
     class Meta:
         abstract = True

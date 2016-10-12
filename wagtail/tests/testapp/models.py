@@ -29,7 +29,8 @@ from wagtail.wagtailcore.blocks import CharBlock, RichTextBlock
 from wagtail.wagtailcore.fields import RichTextField, StreamField
 from wagtail.wagtailcore.models import Orderable, Page, PageManager
 from wagtail.wagtaildocs.edit_handlers import DocumentChooserPanel
-from wagtail.wagtailforms.models import FormPageMixin, AbstractEmailForm, AbstractFormSubmission, AbstractFormField
+from wagtail.wagtailforms.models import (
+    AbstractFormField, AbstractFormSubmission, EmailFormPageMixin)
 from wagtail.wagtailimages.blocks import ImageChooserBlock
 from wagtail.wagtailimages.edit_handlers import ImageChooserPanel
 from wagtail.wagtailimages.models import AbstractImage, Image
@@ -345,7 +346,7 @@ class FormField(AbstractFormField):
     page = ParentalKey('FormPage', related_name='form_fields', on_delete=models.CASCADE)
 
 
-class FormPage(AbstractEmailForm):
+class FormPage(EmailFormPageMixin, Page):
     def get_context(self, request):
         context = super(FormPage, self).get_context(request)
         context['greeting'] = "hello world"
@@ -368,7 +369,7 @@ class JadeFormField(AbstractFormField):
     page = ParentalKey('JadeFormPage', related_name='form_fields', on_delete=models.CASCADE)
 
 
-class JadeFormPage(AbstractEmailForm):
+class JadeFormPage(EmailFormPageMixin, Page):
     template = "tests/form_page.jade"
 
 JadeFormPage.content_panels = [
@@ -384,7 +385,7 @@ JadeFormPage.content_panels = [
 
 # FormPage with a custom FormSubmission
 
-class FormPageWithCustomSubmission(AbstractEmailForm):
+class FormPageWithCustomSubmission(EmailFormPageMixin, Page):
     """
     This Form page:
         * Have custom submission model

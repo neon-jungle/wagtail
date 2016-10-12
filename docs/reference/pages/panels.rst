@@ -167,15 +167,16 @@ FormSubmissionsPanel
 
 .. class:: FormSubmissionsPanel
 
-    This panel adds a single, read-only section in the edit interface for pages implementing the :class:`~wagtail.wagtailforms.models.AbstractForm` model.
+    This panel adds a single, read-only section in the edit interface for pages implementing the :class:`~wagtail.wagtailforms.models.FormPageMixin` model.
     It includes the number of total submissions for the given form and also a link to the listing of submissions.
 
     .. code-block:: python
 
-        from wagtail.wagtailforms.models import AbstractForm
+        from wagtail.wagtailcore.models import Page
+        from wagtail.wagtailforms.models import FormPageMixin
         from wagtail.wagtailforms.edit_handlers import FormSubmissionsPanel
 
-        class ContactFormPage(AbstractForm):
+        class ContactFormPage(FormPageMixin, Page):
             content_panels = [
                 FormSubmissionsPanel(),
             ]

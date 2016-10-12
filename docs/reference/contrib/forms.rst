@@ -19,14 +19,14 @@ Add ``wagtail.wagtailforms`` to your ``INSTALLED_APPS``:
        'wagtail.wagtailforms',
     ]
 
-Within the ``models.py`` of one of your apps, create a model that extends ``wagtailforms.models.FormPageMixin`` and ``Page``:
+Within the ``models.py`` of one of your apps, create a model that extends both :class:`wagtail.wagtailforms.models.FormPageMixin` and :class:`~wagtail.wagtailcore.models.Page`:
 
 
 .. code-block:: python
 
     from modelcluster.fields import ParentalKey
-    from wagtail.wagtailadmin.edit_handlers import (FieldPanel, FieldRowPanel,
-        InlinePanel, MultiFieldPanel)
+    from wagtail.wagtailadmin.edit_handlers import (
+        FieldPanel, FieldRowPanel, InlinePanel, MultiFieldPanel)
     from wagtail.wagtailcore.models import Page
     from wagtail.wagtailcore.fields import RichTextField
     from wagtail.wagtailforms.models import FormPageMixin, AbstractFormField
@@ -44,23 +44,34 @@ Within the ``models.py`` of one of your apps, create a model that extends ``wagt
             FieldPanel('thank_you_text', classname="full"),
         ]
 
-As illustrated above, ``FormPageMixin`` expects ``form_fields`` to be defined. Any additional fields are treated as ordinary page content - note that ``FormPage`` is responsible for serving both the form page itself and the landing page after submission, so the model definition should include all necessary content fields for both of those views.
+As illustrated above, :class:`~wagtail.wagtailforms.models.FormPageMixin` expects ``form_fields`` to be defined. Any additional fields are treated as ordinary page content - note that ``FormPage`` is responsible for serving both the form page itself and the landing page after submission, so the model definition should include all necessary content fields for both of those views.
 
-Wagtail also provides a Page type to use for creating a form, in which the submission is emailed to a recipient defined by the editor. To achieve this form-to-email functionality, you can inherit from ``FormPageMixin`` instead of ``AbstractEmailForm``, and include the ``to_address``, ``from_address`` and ``subject`` fields in the ``content_panels`` definition, like so:
+Wagtail also provides a form mixin which emails the submission recipient defined by the editor. To achieve this form-to-email functionality, you can inherit from :class:`~wagtail.wagtailforms.models.EmailFormPageMixin` instead of :class:`~wagtail.wagtailforms.models.FormPageMixin`, and include the ``to_address``, ``from_address`` and ``subject`` fields in the ``content_panels`` definition, like so:
 
 .. code-block:: python
 
-    ...
-    content_panels = [
-        ...,
-        MultiFieldPanel([
-         FieldRowPanel([
-             FieldPanel('from_address', classname="col6"),
-             FieldPanel('to_address', classname="col6"),
-         ]),
-         FieldPanel('subject'),
-        ], "Email"),
-    ]
+    from modelcluster.fields import ParentalKey
+    from wagtail.wagtailadmin.edit_handlers import (
+        FieldPanel, FieldRowPanel, MultiFieldPanel)
+    from wagtail.wagtailcore.models import Page
+    from wagtail.wagtailforms.models import EmailFormPageMixin, AbstractFormField
+
+    class FormField(AbstractFormField):
+        page = ParentalKey('FormPage', related_name='form_fields')
+
+    class EmailFormPage(EmailFormPageMixin, Page):
+        # ...
+
+        content_panels = Page.content_panels + [
+            MultiFieldPanel([
+                FieldRowPanel([
+                    FieldPanel('from_address', classname="col6"),
+                    FieldPanel('to_address', classname="col6"),
+                ]),
+                FieldPanel('subject'),
+            ], "Email"),
+            # ...
+        ]
 
 
 You now need to create two templates named ``form_page.html`` and ``form_page_landing.html`` (where ``form_page`` is the underscore-formatted version of the class name). ``form_page.html`` differs from a standard Wagtail template in that it is passed a variable ``form``, containing a Django ``Form`` object, in addition to the usual ``page`` variable. A very basic template for the form would thus be:
@@ -97,10 +108,10 @@ Displaying form submission information
 
     from wagtail.wagtailforms.edit_handlers import FormSubmissionsPanel
 
-    class FormPage(AbstractEmailForm):
+    class FormPage(EmailFormPageMixin, Page):
         # ...
 
-        content_panels = AbstractEmailForm.content_panels + [
+        content_panels = Page.content_panels + [
             FormSubmissionsPanel(),
             FieldPanel('intro', classname="full"),
             # ...

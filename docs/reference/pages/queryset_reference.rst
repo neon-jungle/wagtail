@@ -197,8 +197,8 @@ Reference
 
         .. code-block:: python
 
-            # Find all pages that are of type AbstractEmailForm, or a descendant of it
-            form_pages = Page.objects.type(AbstractEmailForm)
+            # Find all pages that are of type FormPageMixin, or a subclass of it
+            form_pages = Page.objects.type(FormPageMixin)
 
     .. automethod:: not_type
 
